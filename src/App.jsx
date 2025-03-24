@@ -8,7 +8,7 @@ import MobileNav from './components/MobileNav';
 import Feed from './components/Feed';
 import EchoInput from './components/EchoInput';
 import Profile from './components/Profile';
-import MessagesPage from './pages/MessagesPage';
+import MessagesPage from './Pages/MessagesPage';
 import Auth from './components/Auth';
 
 export default function App() {
