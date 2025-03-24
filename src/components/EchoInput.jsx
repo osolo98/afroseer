@@ -12,7 +12,7 @@ export default function EchoInput() {
     try {
       await addDoc(collection(db, 'echoes'), {
         text,
-        user: auth.currentUser.email,
+        user: auth.currentUser.uid,
         createdAt: serverTimestamp(),
         likes: [] //initializing likes array
       });

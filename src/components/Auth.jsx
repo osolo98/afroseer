@@ -40,12 +40,12 @@ export default function Auth() {
     const userSnap = await getDoc(userRef);
   
     if (!userSnap.exists()) {
-      // Create user profile if it doesn't exist
       await setDoc(userRef, {
         email: user.email,
         name: user.email.split('@')[0], // default name
         bio: 'Hello! I am new here.',
-        photoURL: '' // empty for now
+        followers: [],
+        following: []
       });
     }
   };
