@@ -48,8 +48,9 @@ export default function App() {
           } />
 
            {/* ✅ Block access to /auth if already logged in */}
-            {!user && <Route path="/auth/:mode" element={<Auth />} />}
-            {user && <Route path="/auth" element={<Navigate to="/" />} />} 
+           <Route path="/auth/:mode" element={
+            user ? <Navigate to="/" /> : <Auth />
+          } /> 
 
        
 
