@@ -5,13 +5,13 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyB2S6WEe7oRI1THd2Ma-Zh8QZZ28yOymho",
-    authDomain: "afroseer-98.firebaseapp.com",
-    projectId: "afroseer-98",
-    storageBucket: "afroseer-98.firebasestorage.app",
-    messagingSenderId: "894541581578",
-    appId: "1:894541581578:web:9f98de1d0bcfee817bfef3"
-  };
+  apiKey: "AIzaSyBEjJ6vCjKB8BfoorQQWGIVygTG8_rqc0M",
+  authDomain: "afroseer-99.firebaseapp.com",
+  projectId: "afroseer-99",
+  storageBucket: "afroseer-99.firebasestorage.app",
+  messagingSenderId: "881765553779",
+  appId: "1:881765553779:web:2263b8ce654bae8bd23c06"
+};
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

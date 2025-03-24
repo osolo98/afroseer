@@ -2,6 +2,9 @@
 import React, { useState } from 'react';
 import { auth } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -12,17 +15,41 @@ export default function Auth() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
+  
     try {
+      let userCredential;
+  
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        userCredential = await createUserWithEmailAndPassword(auth, email, password);
       }
+  
+      // Create profile if it's their first time
+      await createUserProfile(userCredential.user);
+  
     } catch (err) {
       setError(err.message);
     }
   };
+  
+
+  const createUserProfile = async (user) => {
+    const userRef = doc(db, 'users', user.uid);
+  
+    const userSnap = await getDoc(userRef);
+  
+    if (!userSnap.exists()) {
+      // Create user profile if it doesn't exist
+      await setDoc(userRef, {
+        email: user.email,
+        name: user.email.split('@')[0], // default name
+        bio: 'Hello! I am new here.',
+        photoURL: '' // empty for now
+      });
+    }
+  };
+   
 
   return (
     <div>

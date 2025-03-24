@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import CommentSection from './CommentSection.jsx';
+
 
 export default function Feed() {
   const [echoes, setEchoes] = useState([]);
@@ -48,6 +50,7 @@ export default function Feed() {
           <p><strong>{echo.user}</strong></p>
           <p>{echo.text}</p>
 
+          {/* Like Button */}
           <button onClick={() => handleLike(echo.id, echo.likes || [])}>
             {echo.likes && echo.likes.includes(auth.currentUser.email)
               ? '❤️ Liked'
@@ -55,6 +58,9 @@ export default function Feed() {
           </button>
 
           <p>{echo.likes ? echo.likes.length : 0} likes</p>
+
+          {/* Comment Section */}
+          <CommentSection echoId={echo.id} />
         </div>
       ))}
     </div>
