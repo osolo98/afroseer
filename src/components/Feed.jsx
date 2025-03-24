@@ -15,25 +15,19 @@ export default function Feed() {
   const [echoes, setEchoes] = useState([]);
   const [userProfiles, setUserProfiles] = useState({});
 
-  // ✅ Fetch all user profiles once on component mount
   useEffect(() => {
     const fetchProfiles = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'users'));
-        const profiles = {};
-        querySnapshot.forEach(doc => {
-          profiles[doc.id] = doc.data();
-        });
-        setUserProfiles(profiles);
-      } catch (error) {
-        console.error('Error fetching user profiles:', error);
-      }
+      const querySnapshot = await getDocs(collection(db, 'users'));
+      const profiles = {};
+      querySnapshot.forEach(doc => {
+        profiles[doc.id] = doc.data();
+      });
+      setUserProfiles(profiles);
     };
 
     fetchProfiles();
   }, []);
 
-  // ✅ Fetch echoes in real-time
   useEffect(() => {
     const q = query(collection(db, 'echoes'), orderBy('createdAt', 'desc'));
 
@@ -48,54 +42,55 @@ export default function Feed() {
     return () => unsubscribe();
   }, []);
 
-  // ✅ Like handler
   const handleLike = async (echoId, currentLikes = []) => {
-    const userId = auth.currentUser.uid; // ✅ Switch to UID, consistent with userId everywhere
-
+    const userId = auth.currentUser.uid;
     const hasLiked = currentLikes.includes(userId);
+
     const updatedLikes = hasLiked
       ? currentLikes.filter(id => id !== userId)
       : [...currentLikes, userId];
 
     const echoRef = doc(db, 'echoes', echoId);
-    await updateDoc(echoRef, {
-      likes: updatedLikes
-    });
+    await updateDoc(echoRef, { likes: updatedLikes });
   };
 
   return (
     <div>
-      <h2>Feed</h2>
-      {echoes.length === 0 && <p>No echoes yet...</p>}
-
       {echoes.map(echo => {
-        // Get the user's profile by echo.userId
         const authorProfile = userProfiles[echo.userId];
 
         return (
-          <div key={echo.id} style={{
-            border: '1px solid #ddd',
-            padding: '10px',
-            marginBottom: '10px',
-            width: '300px'
-          }}>
-            {/* ✅ Display user name */}
-            <p><strong>{authorProfile?.name || 'Unknown User'}</strong></p>
+          <div
+            key={echo.id}
+            className="border-b border-gray-300 bg-white hover:bg-gray-50 transition duration-200 p-4 flex space-x-3"
+          >
+            {/* Avatar Placeholder */}
+            <div className="flex-shrink-0">
+              <div className="h-12 w-12 rounded-full bg-gray-300"></div>
+            </div>
 
-            {/* Echo content */}
-            <p>{echo.text}</p>
+            <div className="flex-1">
+              <div className="flex justify-between items-center">
+                <p className="font-bold">{authorProfile?.name || 'Unknown User'}</p>
+              </div>
 
-            {/* Like button */}
-            <button onClick={() => handleLike(echo.id, echo.likes || [])}>
-              {echo.likes && echo.likes.includes(auth.currentUser.uid)
-                ? '❤️ Liked'
-                : '🤍 Like'}
-            </button>
+              <p className="text-gray-800 mt-1 mb-3">{echo.text}</p>
 
-            <p>{echo.likes ? echo.likes.length : 0} likes</p>
+              <div className="flex space-x-6 text-gray-500 text-sm">
+                <button
+                  onClick={() => handleLike(echo.id, echo.likes || [])}
+                  className="hover:text-blue-500 flex items-center space-x-1"
+                >
+                  <span>{echo.likes && echo.likes.includes(auth.currentUser.uid) ? '❤️' : '🤍'}</span>
+                  <span>{echo.likes ? echo.likes.length : 0}</span>
+                </button>
+              </div>
 
-            {/* Comment Section */}
-            <CommentSection echoId={echo.id} />
+              {/* Comments Section */}
+              <div className="mt-3">
+                <CommentSection echoId={echo.id} />
+              </div>
+            </div>
           </div>
         );
       })}
