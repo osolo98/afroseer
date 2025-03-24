@@ -20,6 +20,20 @@ export default function Feed() {
     return () => unsubscribe();
   }, []);
 
+  const handleLike = async (echoId, currentLikes = []) => {
+    const userEmail = auth.currentUser.email;
+
+    const hasLiked = currentLikes.includes(userEmail);
+    const updatedLikes = hasLiked
+      ? currentLikes.filter(email => email !== userEmail)
+      : [...currentLikes, userEmail];
+
+    const echoRef = doc(db, 'echoes', echoId);
+    await updateDoc(echoRef, {
+      likes: updatedLikes
+    });
+  };
+
   return (
     <div>
       <h2>Feed</h2>
@@ -33,6 +47,14 @@ export default function Feed() {
         }}>
           <p><strong>{echo.user}</strong></p>
           <p>{echo.text}</p>
+
+          <button onClick={() => handleLike(echo.id, echo.likes || [])}>
+            {echo.likes && echo.likes.includes(auth.currentUser.email)
+              ? '❤️ Liked'
+              : '🤍 Like'}
+          </button>
+
+          <p>{echo.likes ? echo.likes.length : 0} likes</p>
         </div>
       ))}
     </div>

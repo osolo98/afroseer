@@ -14,6 +14,7 @@ export default function EchoInput() {
         text,
         user: auth.currentUser.email,
         createdAt: serverTimestamp(),
+        likes: [] //initializing likes array
       });
       setText('');
     } catch (err) {
