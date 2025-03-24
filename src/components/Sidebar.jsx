@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import {
   Home,
   Search,
@@ -7,15 +8,16 @@ import {
   User,
   Settings
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-export default function Sidebar({ onProfileClick, onLogout }) {
+export default function Sidebar({ onLogout }) {
   const navItems = [
-    { name: 'Home', icon: Home, onClick: () => console.log('Go to Home') },
-    { name: 'Search', icon: Search, onClick: () => console.log('Go to Search') },
-    { name: 'Notifications', icon: Bell, onClick: () => console.log('Go to Notifications') },
-    { name: 'Messages', icon: MessageCircle, onClick: () => console.log('Go to Messages') },
-    { name: 'Profile', icon: User, onClick: onProfileClick },
-    { name: 'Settings', icon: Settings, onClick: () => console.log('Go to Settings') }
+    { name: 'Home', icon: Home, path: '/', counter: 0 },
+    { name: 'Search', icon: Search, path: '/search', counter: 0 },
+    { name: 'Notifications', icon: Bell, path: '/notifications', counter: 3 },
+    { name: 'Messages', icon: MessageCircle, path: '/messages', counter: 5 },
+    { name: 'Profile', icon: User, path: '/profile', counter: 0 },
+    { name: 'Settings', icon: Settings, path: '/settings', counter: 0 },
   ];
 
   return (
@@ -23,15 +25,32 @@ export default function Sidebar({ onProfileClick, onLogout }) {
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-blue-500 mb-8">Afroseer</h1>
 
-        {navItems.map(({ name, icon: Icon, onClick }) => (
-          <button
+        {navItems.map(({ name, icon: Icon, path, counter }) => (
+          <NavLink
             key={name}
-            onClick={onClick}
-            className="flex items-center space-x-4 text-gray-800 hover:text-blue-500 font-medium w-full py-3 px-4 rounded-full hover:bg-gray-100 transition"
+            to={path}
+            className={({ isActive }) =>
+              `flex items-center justify-between font-medium w-full py-3 px-4 rounded-full transition ${
+                isActive
+                  ? 'text-blue-500 bg-gray-100'
+                  : 'text-gray-800 hover:text-blue-500 hover:bg-gray-100'
+              }`
+            }
           >
-            <Icon className="w-6 h-6" />
-            <span>{name}</span>
-          </button>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center space-x-4"
+            >
+              <Icon className="w-6 h-6" />
+              <span>{name}</span>
+            </motion.div>
+            {counter > 0 && (
+              <div className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                {counter}
+              </div>
+            )}
+          </NavLink>
         ))}
       </div>
 
