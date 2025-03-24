@@ -1,44 +1,80 @@
 import React, { useState } from 'react';
-import { db, auth } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 export default function EchoInput() {
   const [text, setText] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handlePost = async () => {
-    if (!text.trim()) return;
+  const handlePostEcho = async () => {
+    const user = auth.currentUser;
 
-    await addDoc(collection(db, 'echoes'), {
-      text,
-      userId: auth.currentUser.uid,
-      createdAt: serverTimestamp(),
-      likes: []
-    });
+    if (!user) {
+      alert('You must be logged in to post an echo!');
+      return;
+    }
 
-    setText('');
+    if (!text.trim()) {
+      alert('Echo cannot be empty.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // ✅ Get user profile from Firestore
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      let displayName = 'Unnamed User';
+      let username = 'unknown';
+
+      if (userDocSnap.exists()) {
+        const data = userDocSnap.data();
+        displayName = data.displayName || user.displayName || 'Unnamed User';
+        username = data.username || 'unknown';
+      }
+
+      // ✅ Add echo with full user info
+      await addDoc(collection(db, 'echoes'), {
+        text: text,
+        userId: user.uid,
+        displayName: displayName,
+        username: username,
+        createdAt: serverTimestamp(),
+        likes: [],
+        views: 0,
+        commentsCount: 0
+      });
+
+      console.log('Echo posted!');
+      setText('');
+    } catch (error) {
+      console.error('Error posting echo:', error);
+      alert('Failed to post echo. Please try again.');
+    }
+
+    setLoading(false);
   };
 
   return (
-    <div className="p-4 border-b border-gray-300 bg-white">
-      <div className="flex space-x-4">
-        {/* Avatar Placeholder */}
-        <div className="h-12 w-12 rounded-full bg-gray-300"></div>
+    <div className="p-4 bg-white border-b border-gray-300">
+      <textarea
+        className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+        rows="3"
+        placeholder="What's on your mind?"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        disabled={loading}
+      />
 
-        <textarea
-          className="flex-1 focus:outline-none focus:ring-0 resize-none text-lg text-gray-800"
-          placeholder="What's happening?"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={3}
-        />
-      </div>
-
-      <div className="flex justify-end mt-3">
+      <div className="flex justify-end mt-2">
         <button
-          onClick={handlePost}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-2 rounded-full"
+          onClick={handlePostEcho}
+          disabled={loading}
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition disabled:bg-blue-300"
         >
-          Echo
+          {loading ? 'Posting...' : 'Post Echo'}
         </button>
       </div>
     </div>
