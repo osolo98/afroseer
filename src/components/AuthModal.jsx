@@ -1,101 +1,98 @@
+// 📄 src/components/AuthModal.jsx
+
 import React, { useState } from 'react';
-import { useAuthModal } from '../context/AuthModalContext';
+import { Dialog } from '@headlessui/react';
 import { auth, db } from '../firebase';
 import {
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuthModal } from '../context/AuthModalContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function AuthModal() {
-  const { isOpen, setIsOpen } = useAuthModal();
-  const [isLogin, setIsLogin] = useState(true);
+  const { isOpen, setIsOpen, redirectPath, setRedirectPath } = useAuthModal();
+  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  if (!isOpen) return null;
-
-  const toggle = () => setIsLogin(!isLogin);
-
-  const handleSubmit = async () => {
+  const handleAuth = async () => {
     setLoading(true);
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        const userCred = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCred.user;
-        const username = `user_${Date.now().toString(36)}`;
-        await setDoc(doc(db, 'users', user.uid), {
-          displayName,
-          username,
+      let userCred;
+      if (isRegister) {
+        userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+        const defaultUsername = 'user' + Math.floor(Math.random() * 10000);
+        await setDoc(doc(db, 'users', userCred.user.uid), {
+          displayName: 'New User',
+          username: defaultUsername,
+          avatar: '',
           createdAt: serverTimestamp(),
-          dmPermission: 'everyone',
-          followers: [],
-          following: []
         });
+      } else {
+        userCred = await signInWithEmailAndPassword(auth, email, password);
       }
+
+      // ✅ Close modal and redirect
       setIsOpen(false);
+      navigate(redirectPath || '/profile');
+      setRedirectPath(null);
     } catch (err) {
-      alert(err.message);
+      alert('Authentication failed. Check your credentials.');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white w-full max-w-md p-6 rounded shadow-lg relative">
-        <h2 className="text-xl font-semibold mb-4">{isLogin ? 'Login' : 'Register'}</h2>
+    <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-50">
+      <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+          <Dialog.Title className="text-lg font-semibold mb-4">
+            {isRegister ? 'Register' : 'Login'}
+          </Dialog.Title>
 
-        {!isLogin && (
           <input
-            type="text"
-            placeholder="Display Name"
-            className="w-full mb-2 p-2 border rounded"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
+            type="email"
+            placeholder="Email"
+            className="w-full mb-3 p-2 border rounded"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
-        )}
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full mb-2 p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full mb-4 p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full mb-4 p-2 border rounded"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        <button
-          className="w-full bg-blue-600 text-white py-2 rounded mb-2"
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? 'Processing...' : isLogin ? 'Login' : 'Register'}
-        </button>
-
-        <p className="text-sm text-center">
-          {isLogin ? 'New here?' : 'Already have an account?'}{' '}
-          <button onClick={toggle} className="text-blue-600 underline">
-            {isLogin ? 'Register' : 'Login'}
+          <button
+            onClick={handleAuth}
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            disabled={loading}
+          >
+            {loading ? 'Processing...' : isRegister ? 'Register' : 'Login'}
           </button>
-        </p>
 
-        <button
-          onClick={() => setIsOpen(false)}
-          className="absolute top-2 right-3 text-gray-500 hover:text-black text-xl"
-        >
-          &times;
-        </button>
+          <p className="text-sm text-center text-gray-500 mt-4">
+            {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
+              onClick={() => setIsRegister(!isRegister)}
+              className="text-blue-600 hover:underline"
+            >
+              {isRegister ? 'Login' : 'Register'}
+            </button>
+          </p>
+        </Dialog.Panel>
       </div>
-    </div>
+    </Dialog>
   );
 }

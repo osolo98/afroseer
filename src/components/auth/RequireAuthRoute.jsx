@@ -1,17 +1,23 @@
-import React from 'react';
+// 📄 src/components/auth/RequireAuthRoute.jsx
+
+import React, { useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { Navigate } from 'react-router-dom';
 import { auth } from '../../firebase';
 import { useAuthModal } from '../../context/AuthModalContext';
+import { useLocation } from 'react-router-dom';
 
 export default function RequireAuthRoute({ children }) {
   const [user] = useAuthState(auth);
-  const { setIsOpen } = useAuthModal();
+  const { setIsOpen, setRedirectPath } = useAuthModal();
+  const location = useLocation();
 
-  if (!user) {
-    setIsOpen(true); // show modal instead of navigate
-    return null;
-  }
+  useEffect(() => {
+    if (!user) {
+      setRedirectPath(location.pathname); // Save where user was going
+      setIsOpen(true); // Open login/register modal
+    }
+  }, [user, setIsOpen, setRedirectPath, location.pathname]);
 
+  if (!user) return null;
   return children;
 }

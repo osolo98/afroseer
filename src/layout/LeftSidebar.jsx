@@ -1,4 +1,4 @@
-// 📄 File: src/components/layout/LeftSidebar.jsx
+// 📄 src/components/layout/LeftSidebar.jsx
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -26,7 +26,7 @@ export default function LeftSidebar() {
   const [user] = useAuthState(auth);
   const [userData, setUserData] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { setIsOpen } = useAuthModal();
+  const { setIsOpen, setRedirectPath } = useAuthModal();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -41,28 +41,45 @@ export default function LeftSidebar() {
     fetchUserData();
   }, [user]);
 
-  const nav = [
-    { label: 'Home', path: '/', icon: <HomeIcon className="h-5 w-5" /> },
-    { label: 'Streams', path: '/streams', icon: <VideoCameraIcon className="h-5 w-5" /> },
-    { label: 'Messages', path: '/messages', icon: <ChatBubbleLeftRightIcon className="h-5 w-5" /> },
-    { label: 'Wallet', path: '/wallet', icon: <WalletIcon className="h-5 w-5" /> },
-    { label: 'Profile', path: '/profile', icon: <UserCircleIcon className="h-5 w-5" /> },
-  ];
-
   const handleLogout = async () => {
     await signOut(auth);
     navigate('/');
   };
 
+  const handleProfileClick = () => {
+    if (user) {
+      navigate('/profile');
+    } else {
+      setRedirectPath('/profile');
+      setIsOpen(true);
+    }
+  };
+
+  const handleProtectedClick = (path) => {
+    if (user) {
+      navigate(path);
+    } else {
+      setRedirectPath(path);
+      setIsOpen(true);
+    }
+  };
+
+  const nav = [
+    { label: 'Home', path: '/', icon: <HomeIcon className="h-5 w-5" />, protected: false },
+    { label: 'Streams', path: '/streams', icon: <VideoCameraIcon className="h-5 w-5" />, protected: false },
+    { label: 'Messages', path: '/messages', icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />, protected: true },
+    { label: 'Wallet', path: '/wallet', icon: <WalletIcon className="h-5 w-5" />, protected: true },
+  ];
+
   return (
     <aside className="hidden lg:flex flex-col w-56 p-4 space-y-4 fixed left-0 top-0 h-full border-r bg-white">
       <h1 className="text-2xl font-bold text-blue-600 mb-4">Afroseer</h1>
 
-      {/* ✅ Logged in user info (Twitter-style) */}
+      {/* Profile summary (clickable) */}
       {user && userData && (
-        <Link
-          to="/profile"
-          className="flex items-center space-x-3 mb-2 p-2 rounded hover:bg-gray-100 transition"
+        <button
+          onClick={handleProfileClick}
+          className="flex items-center space-x-3 mb-2 p-2 rounded hover:bg-gray-100 transition text-left"
         >
           <img
             src={userData.avatar || 'https://placehold.co/40x40?text=👤'}
@@ -77,22 +94,46 @@ export default function LeftSidebar() {
               @{userData.username || 'user'}
             </p>
           </div>
-        </Link>
+        </button>
       )}
 
       {/* Nav links */}
-      {nav.map((item) => (
-        <Link
-          key={item.path}
-          to={item.path}
-          className={`flex items-center space-x-2 p-2 rounded hover:bg-gray-100 ${
-            pathname === item.path ? 'font-semibold text-blue-600' : 'text-gray-700'
-          }`}
-        >
-          {item.icon}
-          <span>{item.label}</span>
-        </Link>
-      ))}
+      {nav.map((item) =>
+        item.protected ? (
+          <button
+            key={item.path}
+            onClick={() => handleProtectedClick(item.path)}
+            className={`flex items-center space-x-2 p-2 rounded hover:bg-gray-100 w-full text-left ${
+              pathname === item.path ? 'font-semibold text-blue-600' : 'text-gray-700'
+            }`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </button>
+        ) : (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={`flex items-center space-x-2 p-2 rounded hover:bg-gray-100 ${
+              pathname === item.path ? 'font-semibold text-blue-600' : 'text-gray-700'
+            }`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </Link>
+        )
+      )}
+
+      {/* Profile button (protected) */}
+      <button
+        onClick={handleProfileClick}
+        className={`flex items-center space-x-2 p-2 rounded hover:bg-gray-100 ${
+          pathname === '/profile' ? 'font-semibold text-blue-600' : 'text-gray-700'
+        }`}
+      >
+        <UserCircleIcon className="h-5 w-5" />
+        <span>Profile</span>
+      </button>
 
       {/* Settings dropdown */}
       <div className="mt-6">
@@ -108,35 +149,35 @@ export default function LeftSidebar() {
 
         {settingsOpen && (
           <div className="ml-6 mt-2 space-y-2 text-sm text-gray-600">
-            <Link
-              to="/settings/account"
+            <button
+              onClick={() => handleProtectedClick('/settings/account')}
               className={`flex items-center gap-2 p-1 rounded hover:text-blue-600 ${
                 pathname === '/settings/account' ? 'text-blue-600 font-medium' : ''
               }`}
             >
               <UserIcon className="h-4 w-4" /> Account
-            </Link>
-            <Link
-              to="/settings/notifications"
+            </button>
+            <button
+              onClick={() => handleProtectedClick('/settings/notifications')}
               className={`flex items-center gap-2 p-1 rounded hover:text-blue-600 ${
                 pathname === '/settings/notifications' ? 'text-blue-600 font-medium' : ''
               }`}
             >
               <BellIcon className="h-4 w-4" /> Notifications
-            </Link>
-            <Link
-              to="/settings/privacy"
+            </button>
+            <button
+              onClick={() => handleProtectedClick('/settings/privacy')}
               className={`flex items-center gap-2 p-1 rounded hover:text-blue-600 ${
                 pathname === '/settings/privacy' ? 'text-blue-600 font-medium' : ''
               }`}
             >
               <LockClosedIcon className="h-4 w-4" /> Privacy
-            </Link>
+            </button>
           </div>
         )}
       </div>
 
-      {/* Login / Logout */}
+      {/* Login/Logout */}
       <div className="mt-auto pt-4 border-t">
         {user ? (
           <button
