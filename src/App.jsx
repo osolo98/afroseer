@@ -1,76 +1,71 @@
+// 📄 src/App.jsx
+
 import React from 'react';
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from './firebase';
+import { Routes, Route } from 'react-router-dom';
 
-import Sidebar from './components/Sidebar';
-import MobileNav from './components/MobileNav';
-import Feed from './components/Feed';
-import EchoInput from './components/EchoInput';
-import Profile from './components/Profile';
-import MessagesPage from './Pages/MessagesPage';
-import Auth from './components/Auth';
+import HomeScreen from './screens/HomeScreen';
+import StreamsScreen from './screens/StreamsScreen';
+import MessagesScreen from './screens/MessagesScreen';
+import WalletScreen from './screens/WalletScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import BottomNavBar from './layout/BottomNavBar';
+import HashtagFeed from './screens/HashtagFeed';
+import SettingsScreen from './screens/SettingsScreen';
+import SettingsAccount from './screens/SettingsAccount';
+import SettingsNotifications from './screens/SettingsNotifications';
+import SettingsPrivacy from './screens/SettingsPrivacy';
+import AuthScreen from './screens/AuthScreen';
+import MessageRequests from './screens/MessageRequests';
+import RequireAuthRoute from './components/auth/RequireAuthRoute';
 
-export default function App() {
-  const [user, loading] = useAuthState(auth);
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      navigate('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <h2 className="text-xl text-gray-600">Loading...</h2>
-      </div>
-    );
-  }
-
+function App() {
   return (
-    <div className="min-h-screen flex justify-center bg-gray-100 text-gray-800">
-      {/* ✅ Sidebar shows for both guests and logged in users */}
-      <Sidebar user={user} onLogout={handleLogout} />
-
-      <main className="w-full md:w-3/5 border-x border-gray-300 bg-white min-h-screen">
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="flex-grow">
         <Routes>
-          {/* ✅ Public homepage */}
-          <Route path="/" element={
-            <>
-              {user && <EchoInput />}
-              <Feed />
-            </>
-          } />
+          <Route path="/" element={<HomeScreen />} />
+          <Route path="/streams" element={<StreamsScreen />} />
+          
+          <Route
+            path="/messages"
+            element={
+              <RequireAuthRoute>
+                <MessagesScreen />
+              </RequireAuthRoute>
+            }
+          />
+          <Route
+            path="/messages/requests"
+            element={
+              <RequireAuthRoute>
+                <MessageRequests />
+              </RequireAuthRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <RequireAuthRoute>
+                <ProfileScreen />
+              </RequireAuthRoute>
+            }
+          />
+          <Route path="/profile/:id" element={<ProfileScreen />} />
 
-           {/* ✅ Block access to /auth if already logged in */}
-           <Route path="/auth/:mode" element={
-            user ? <Navigate to="/" /> : <Auth />
-          } /> 
+          <Route path="/wallet" element={<WalletScreen />} />
+          <Route path="/hashtag/:tag" element={<HashtagFeed />} />
 
-       
-
-          {/* ✅ Protected pages */}
-          {user && (
-            <>
-              <Route path="/profile" element={<Profile targetUserId={user.uid} />} />
-              <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/settings" element={<div className="p-6">Settings Page</div>} />
-              <Route path="/notifications" element={<div className="p-6">Notifications Page</div>} />
-            </>
-          )}
-
-          {/* Optional fallback */}
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/settings" element={<SettingsScreen />} />
+          <Route path="/settings/account" element={<SettingsAccount />} />
+          <Route path="/settings/notifications" element={<SettingsNotifications />} />
+          <Route path="/settings/privacy" element={<SettingsPrivacy />} />
+          <Route path="/auth" element={<AuthScreen />} />
         </Routes>
-      </main>
+      </div>
 
-      {/* ✅ MobileNav (show only when logged in) */}
-      {user && <MobileNav />}
+      <BottomNavBar />
     </div>
   );
 }
+
+export default App;

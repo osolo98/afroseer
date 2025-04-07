@@ -1,82 +1,80 @@
+// 📄 src/components/EchoInput.jsx
 import React, { useState } from 'react';
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  getDoc,
+  doc
+} from 'firebase/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import AuthGuard from './AuthGuard';
 
 export default function EchoInput() {
   const [text, setText] = useState('');
+  const [user] = useAuthState(auth);
   const [loading, setLoading] = useState(false);
 
-  const handlePostEcho = async () => {
-    const user = auth.currentUser;
-
-    if (!user) {
-      alert('You must be logged in to post an echo!');
-      return;
-    }
-
-    if (!text.trim()) {
-      alert('Echo cannot be empty.');
-      return;
-    }
+  const handlePost = async () => {
+    if (!user || !text.trim()) return;
 
     setLoading(true);
 
     try {
-      // ✅ Get user profile from Firestore
+      // 🔍 Get the user's displayName and username
       const userDocRef = doc(db, 'users', user.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      const userSnap = await getDoc(userDocRef);
 
-      let displayName = 'Unnamed User';
-      let username = 'unknown';
-
-      if (userDocSnap.exists()) {
-        const data = userDocSnap.data();
-        displayName = data.displayName || user.displayName || 'Unnamed User';
-        username = data.username || 'unknown';
+      if (!userSnap.exists()) {
+        console.error('User profile not found!');
+        setLoading(false);
+        return;
       }
 
-      // ✅ Add echo with full user info
+      const { displayName, username } = userSnap.data();
+
       await addDoc(collection(db, 'echoes'), {
-        text: text,
-        userId: user.uid,
-        displayName: displayName,
-        username: username,
+        text,
         createdAt: serverTimestamp(),
+        userId: user.uid,
+        displayName,
+        username,
+        type: 'echo', // important if you're also planning "voice" types later
         likes: [],
         views: 0,
         commentsCount: 0
       });
 
-      console.log('Echo posted!');
       setText('');
-    } catch (error) {
-      console.error('Error posting echo:', error);
-      alert('Failed to post echo. Please try again.');
+    } catch (err) {
+      console.error('Error posting echo:', err.message);
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="p-4 bg-white border-b border-gray-300">
-      <textarea
-        className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
-        rows="3"
-        placeholder="What's on your mind?"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        disabled={loading}
-      />
+    <AuthGuard>
+      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
+        <textarea
+          className="w-full resize-none border-none outline-none text-sm"
+          placeholder="What's happening?"
+          rows={3}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
 
-      <div className="flex justify-end mt-2">
-        <button
-          onClick={handlePostEcho}
-          disabled={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition disabled:bg-blue-300"
-        >
-          {loading ? 'Posting...' : 'Post Echo'}
-        </button>
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={handlePost}
+            disabled={!text.trim() || loading}
+            className="bg-blue-600 text-white px-4 py-1.5 text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? 'Posting...' : 'Post'}
+          </button>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

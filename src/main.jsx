@@ -1,13 +1,20 @@
+// 📄 File: src/main.jsx
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
-import { BrowserRouter } from 'react-router-dom';
 import './index.css';
+import App from './App';
+import { AuthModalProvider } from './context/AuthModalContext';
+import { BrowserRouter } from 'react-router-dom'; // ✅ ADD THIS
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthModalProvider>
+        <App />
+      </AuthModalProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

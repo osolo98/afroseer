@@ -1,7 +1,10 @@
+/* 📄 File: src/index.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-.test-color {
-    @apply text-blue-600 bg-green-300;
-  }
+/* Optional global styles */
+body {
+  @apply font-sans text-gray-800 bg-gray-50;
+}
